@@ -1,5 +1,18 @@
 User features:
-* Sign up by submitting email
+* Image.
+* Description.
+* Explanation of what happens with the data when submitted and after.
+* Validation: Validate that the email was submitted successfully and notify the user.
 
 Admin features:
-* Read list of submitted emails
+* Read list of submitted emails.
+* Users should not have access to this list.
+* Store encryption key in (auto-generated?) config file.
+
+Security features:
+* Check if regex to validate email is evil.
+* Sanitize req.body. Everywhere.
+* Set up express-limiter to limit user requests.
+* Use helmet with express!
+* Enable TLS/SSL (HTTPS).
+* Block bots using express-nobots.

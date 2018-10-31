@@ -2,6 +2,7 @@ const sqlite3 = require('sqlite3').verbose()
 const express = require('express')
 const bodyParser = require('body-parser')
 const crypto = require('crypto')
+const fs = require('fs')
 
 let db = new sqlite3.Database('database.db', err => {
   if (err) return console.error(err.message)
@@ -28,24 +29,40 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html')
 })
 
-const ENCRYPTION_KEY = 'FQlJBGGW7xQeXLJMkCc0mP6rwZZSJqcm'
-const IV = crypto.randomBytes(16)
+function getEncryptionKey(path) {
+	try {
+		return fs.readFileSync(path)
+	} catch(e) {
+		// Create key if not exists (16 Bytes * 8 Bit/Byte = 128 Bits)
+		const key = crypto.randomBytes(16).toString('hex')
+		fs.writeFileSync(path, key)
+		return key
+	}
+}
 
 function createEncryptedEmail(email) {
-  const cipher = crypto.createCipheriv('aes-256-cbc', new Buffer(ENCRYPTION_KEY), IV)
+	const iv = crypto.randomBytes(16)
+  const cipher = crypto.createCipheriv('aes-256-cbc', new Buffer(getEncryptionKey('encryption_key.conf')), iv)
 
   let encrypted = cipher.update(email)
 
   encrypted = Buffer.concat([encrypted, cipher.final()])
 
-  return encrypted.toString('hex')
+  return iv.toString('hex') + ':' + encrypted.toString('hex')
 }
 
-function createDecryptedEmail(email) {
-  let decipher = crypto.createDecipheriv('aes-256-cbc', new Buffer(ENCRYPTION_KEY), IV)
-  let decrypted = decipher.update(Buffer(email, 'hex'))
+function createDecryptedEmail(encrypted) {
+	let parts = encrypted.split(':')
+	let iv = new Buffer(parts[0], 'hex')
+	let encryptedEmail = new Buffer(parts[1], 'hex')
+  let decipher = crypto.createDecipheriv('aes-256-cbc', new Buffer(getEncryptionKey('encryption_key.conf')), iv)
+  let decrypted = decipher.update(encryptedEmail)
 
-  decrypted = Buffer.concat([decrypted, decipher.final()])
+	try {
+		decrypted = Buffer.concat([decrypted, decipher.final()])
+	} catch(e) {
+		console.log("Error decrypting: \n" + e)
+	}
 
   return decrypted.toString()
 }
