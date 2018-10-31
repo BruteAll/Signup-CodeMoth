@@ -1,0 +1,77 @@
+@font-face {
+	src: url('Nunito-Regular.ttf');
+	font-family: 'ContentFont';
+}
+
+@font-face {
+	src: url('Montserrat-Regular.ttf');
+	font-family: 'TitleFont';
+}
+
+body {
+	font-family: "ContentFont";
+	font-size: 20px;
+}
+
+header {
+	margin: auto;
+	max-width: 720px;
+}
+
+main {
+	margin: auto;
+	max-width: 400px;
+	padding-bottom: 200px;
+}
+
+h1 {
+	font-weight: normal;
+	font-family: 'TitleFont';
+	text-transform: uppercase;
+	text-align: center;
+}
+
+p,label {
+	display: block;
+}
+
+img {
+	display: block;
+	margin: auto;
+}
+
+label {
+	padding: 50px;
+}
+
+input {
+	border: 0;
+	border-bottom: 1px solid #999;
+	padding: 5px 0;
+	margin-left: 5px;
+	font-size: 20px;
+}
+
+button {
+	display: block;
+	margin: auto;
+	margin-top: 20px;
+	width: 100%;
+	height: 50px;
+	border: 0;
+	background: teal;
+	color: white;
+	font-weight: bold;
+	font-size: 16px;
+}
+
+button:hover {
+	background: #009090;
+	cursor: pointer;
+}
+
+input:focus {
+	outline: none;
+	border: 0;
+	border-bottom: 1px solid black;
+}

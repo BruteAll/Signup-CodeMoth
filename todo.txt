@@ -1,13 +1,10 @@
 User features:
-* Image.
-* Description.
-* Explanation of what happens with the data when submitted and after.
 * Validation: Validate that the email was submitted successfully and notify the user.
+* Make it pretty with CSS.
 
 Admin features:
 * Read list of submitted emails.
 * Users should not have access to this list.
-* Store encryption key in (auto-generated?) config file.
 
 Security features:
 * Check if regex to validate email is evil.
@@ -16,3 +13,9 @@ Security features:
 * Use helmet with express!
 * Enable TLS/SSL (HTTPS).
 * Block bots using express-nobots.
+
+Done:
+* Store encryption key in (auto-generated?) config file.
+* Image.
+* Description.
+* Explanation of what happens with the data when submitted and after.
