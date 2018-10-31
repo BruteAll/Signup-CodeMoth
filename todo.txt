@@ -1,0 +1,5 @@
+User features:
+* Sign up by submitting email
+
+Admin features:
+* Read list of submitted emails
