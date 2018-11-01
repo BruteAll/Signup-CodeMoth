@@ -17,6 +17,18 @@ function SubmittedNotification(props) {
 	)
 }
 
+function Feedback(props) {
+  if (props.message) {
+    return (
+      <div class="feedback">
+        {props.message}
+      </div>
+    )
+  }
+
+  return
+}
+
 function Form(props) {
   return (
 		<div>
@@ -29,6 +41,7 @@ function Form(props) {
 			<button
 				onClick={props.submitHandler}>Submit</button>
 			</label>
+      <Feedback message={props.feedback}/>
 		</div>
   )
 }
@@ -45,7 +58,8 @@ class App extends Component {
 
     this.state = {
       state: this.states.FILLING,
-      email: ''
+      email: '',
+      feedback: ''
     }
   }
 
@@ -55,19 +69,20 @@ class App extends Component {
     }
 
     const submitHandler = () => {
-      this.setState({state: this.states.WAITING})
+      this.setState({
+        feedback: "Submitting..."
+      })
 
       this.props.post('/', {email: this.state.email}).then(res => {
-        this.setState({state: this.states.SUBMITTED})
+        this.setState({
+          feedback: "Thank you for signing up!"
+        })
+      }).catch(err => { 
+        this.setState({
+          state: this.states.FILLING,
+          feedback: err.response.data
+        })
       })
-    }
-
-		let main = <Form emailObserver={emailObserver} submitHandler={submitHandler}/>
-
-    if (this.state.state === this.states.WAITING) {
-      main = <SubmittingNotification/>
-    } else if (this.state.state === this.states.SUBMITTED) {
-      main = <SubmittedNotification/>
     }
 
 		return (
@@ -77,7 +92,7 @@ class App extends Component {
 					<img src="brainpuzzle.gif"/>
 				</header>
 				<main>
-					{main}
+          <Form emailObserver={emailObserver} submitHandler={submitHandler} feedback={this.state.feedback}/>
 				</main>
 			</div>
 		)

@@ -3,6 +3,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const crypto = require('crypto')
 const fs = require('fs')
+const { check, validationResult } = require('express-validator/check')
 
 let db = new sqlite3.Database('database.db', err => {
   if (err) return console.error(err.message)
@@ -11,7 +12,9 @@ let db = new sqlite3.Database('database.db', err => {
   db.run(`CREATE TABLE IF NOT EXISTS signups(
     email text unique,
     created datetime default current_timestamp
-  );`)
+  );`, [], err => {
+    if (err) console.log(err)
+  })
 })
 
 db.close(err => {
@@ -21,7 +24,7 @@ db.close(err => {
 
 const app = express()
 
-app.use(bodyParser.json())
+app.use(express.json())
 
 app.use(express.static('public'))
 
@@ -69,21 +72,26 @@ function createDecryptedEmail(encrypted) {
 
 const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
-app.post('/', (req, res) => {
-  if (!emailRegex.test(req.body.email)) {
-    res.send("Not a proper email address.")
-    return
+app.post('/', [
+  check('email').isEmail().normalizeEmail().withMessage("Email was not a proper email.")
+], (req, res) => {
+  const errors = validationResult(req)
+  console.log(errors.array())
+  if (!errors.isEmpty()) {
+    return res.status(422).send(errors.array()[0].msg)
   }
 
   const encryptedEmail = createEncryptedEmail(req.body.email)
 
   let db = new sqlite3.Database('database.db', err => {
     db.run('INSERT INTO signups(email) VALUES ("'+encryptedEmail+'")', err => {
-      console.log(err)
+      if (err) {
+        console.log(err)
+        return res.status(422).send(err)
+      }
+      res.send("Saved email successfully!")
     })
   })
-
-  res.send(req.body.email)
 })
 
 app.get('/signups', (req, res) => {
