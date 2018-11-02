@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose()
 const express = require('express')
 const bodyParser = require('body-parser')
-const crypto = require('crypto')
+const cryptojs = require('crypto-js')
 const fs = require('fs')
 const { check, validationResult } = require('express-validator/check')
 
@@ -34,65 +34,65 @@ app.get('/', (req, res) => {
 
 function getEncryptionKey(path) {
 	try {
-		return fs.readFileSync(path)
+		return fs.readFileSync(path).toString()
 	} catch(e) {
-		// Create key if not exists (16 Bytes * 8 Bit/Byte = 128 Bits)
-		const key = crypto.randomBytes(16).toString('hex')
-		fs.writeFileSync(path, key)
-		return key
+		// Create key if not exists
+		const key = cryptojs.lib.WordArray.random(16).toString()
+    try {
+      fs.writeFileSync(path, key)
+      return key
+    } catch(e) {
+      console.log("Failed saving " + path + ": " + e)
+    }
 	}
 }
 
 function createEncryptedEmail(email) {
-	const iv = crypto.randomBytes(16)
-  const cipher = crypto.createCipheriv('aes-256-cbc', new Buffer(getEncryptionKey('encryption_key.conf')), iv)
-
-  let encrypted = cipher.update(email)
-
-  encrypted = Buffer.concat([encrypted, cipher.final()])
-
-  return iv.toString('hex') + ':' + encrypted.toString('hex')
+  return cryptojs.AES.encrypt(email, getEncryptionKey('encryption_key.conf'))
 }
 
 function createDecryptedEmail(encrypted) {
-	let parts = encrypted.split(':')
-	let iv = new Buffer(parts[0], 'hex')
-	let encryptedEmail = new Buffer(parts[1], 'hex')
-  let decipher = crypto.createDecipheriv('aes-256-cbc', new Buffer(getEncryptionKey('encryption_key.conf')), iv)
-  let decrypted = decipher.update(encryptedEmail)
-
-	try {
-		decrypted = Buffer.concat([decrypted, decipher.final()])
-	} catch(e) {
-		console.log("Error decrypting: \n" + e)
-	}
-
-  return decrypted.toString()
+  let key = getEncryptionKey('encryption_key.conf')
+  return cryptojs.AES.decrypt(encrypted, key).toString(cryptojs.enc.Utf8)
 }
-
-const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
 app.post('/', [
   check('email').isEmail().normalizeEmail().withMessage("Email was not a proper email.")
 ], (req, res) => {
   const errors = validationResult(req)
-  console.log(errors.array())
   if (!errors.isEmpty()) {
+    console.log(errors.array())
     return res.status(422).send(errors.array()[0].msg)
   }
 
   const encryptedEmail = createEncryptedEmail(req.body.email)
 
   let db = new sqlite3.Database('database.db', err => {
+    if (err) {
+      console.log(err)
+      return res.status(500).send(err)
+    }
     db.run('INSERT INTO signups(email) VALUES ("'+encryptedEmail+'")', err => {
       if (err) {
         console.log(err)
         return res.status(422).send(err)
       }
+      console.log("Saving email!")
       res.send("Saved email successfully!")
     })
   })
 })
+
+function uniqEmails(rows, filter, seen=[], i=0) {
+  if (i+1 > rows.length) return seen
+
+  // TODO: Find a pure way of doing this (without using rows[i] inside the bloody function).
+  if (seen.filter(row => row.email === rows[i].email).length == 0) {
+    seen.push(rows[i])
+  }
+
+  return uniqEmails(rows, filter, seen, i+1)
+}
 
 app.get('/signups', (req, res) => {
   let db = new sqlite3.Database('database.db', err => {
@@ -108,7 +108,10 @@ app.get('/signups', (req, res) => {
         }
       })
 
-      res.send(decrypted)
+      // Remove duplicate emails
+      const uniques = uniqEmails(decrypted)
+
+      res.send(uniques)
     })
   })
 })

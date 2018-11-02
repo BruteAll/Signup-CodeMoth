@@ -1,6 +1,4 @@
 User features:
-* Validation: Validate that the email was submitted successfully and notify the user.
-* Make it pretty with CSS.
 
 Admin features:
 * Read list of submitted emails.
@@ -19,3 +17,7 @@ Done:
 * Image.
 * Description.
 * Explanation of what happens with the data when submitted and after.
+* Validation: Validate that the email was submitted successfully and notify the user.
+* Make it pretty with CSS.
+* Remove the signup input after submitting.
+* Fix issue with website resizing after submitting.

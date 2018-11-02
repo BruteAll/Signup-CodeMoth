@@ -29,18 +29,32 @@ function Feedback(props) {
   return
 }
 
+function EmailInput(props) {
+  // Don't show email input if already submitted.
+  if (props.submitted === true) return
+
+  return (
+    <label>Email:
+    <input type="text" id="email-input" 
+      onChange={props.emailObserver} />
+    <button
+      onClick={props.submitHandler}>Submit</button>
+    </label>
+  )
+}
+
 function Form(props) {
+
   return (
 		<div>
 			<p>[event description]</p>
 			<p>Write your email below and click submit to sign up for the event!</p>
-			<p>The email will be removed from our database on the day after the event.</p>
-			<label>Email:
-			<input type="text" id="email-input" 
-				onChange={props.emailObserver} />
-			<button
-				onClick={props.submitHandler}>Submit</button>
-			</label>
+      <p>We will only use the email to see how many are signed up, and to send you information about the event.</p>
+      <p>After the event the email will be removed from our database.</p>
+      <EmailInput 
+        emailObserver={props.emailObserver}
+        submitHandler={props.submitHandler}
+        submitted={props.submitted}/>
       <Feedback message={props.feedback}/>
 		</div>
   )
@@ -50,39 +64,35 @@ class App extends Component {
   constructor(props) {
     super(props)
 
-    this.states = {
-      FILLING: 0,
-      WAITING: 1,
-      SUBMITTED: 2
-    }
-
     this.state = {
-      state: this.states.FILLING,
       email: '',
-      feedback: ''
+      feedback: '',
+      submitted: false
     }
   }
 
   render() {
-    const emailObserver = e => {
-      this.setState({email: e.target.value})
-    }
 
     const submitHandler = () => {
       this.setState({
-        feedback: "Submitting..."
+        feedback: "Submitting...",
+        submitted: true
       })
 
       this.props.post('/', {email: this.state.email}).then(res => {
         this.setState({
           feedback: "Thank you for signing up!"
         })
-      }).catch(err => { 
+      }).catch(err => {
         this.setState({
-          state: this.states.FILLING,
-          feedback: err.response.data
+          feedback: err.response.data,
+          submitted: false
         })
       })
+    }
+
+    const emailObserver = e => {
+      this.setState({email: e.target.value})
     }
 
 		return (
@@ -92,7 +102,11 @@ class App extends Component {
 					<img src="brainpuzzle.gif"/>
 				</header>
 				<main>
-          <Form emailObserver={emailObserver} submitHandler={submitHandler} feedback={this.state.feedback}/>
+          <Form 
+            submitHandler={submitHandler}
+            emailObserver={emailObserver}
+            feedback={this.state.feedback}
+            submitted={this.state.submitted}/>
 				</main>
 			</div>
 		)
