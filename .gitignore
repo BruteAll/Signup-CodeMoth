@@ -77,3 +77,6 @@ typings/
 
 # Encryption key
 encryption_key.conf
+
+# Vim swap file
+*.swp
