@@ -80,3 +80,13 @@ encryption_key.conf
 
 # Vim swap file
 *.swp
+
+# HTTPS stuff
+*.pem
+*.csr
+
+# Config files
+*.conf
+
+# SQLite database
+*.db

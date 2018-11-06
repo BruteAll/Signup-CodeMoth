@@ -1,28 +1,47 @@
 const sqlite3 = require('sqlite3').verbose()
 const express = require('express')
-const bodyParser = require('body-parser')
 const cryptojs = require('crypto-js')
 const fs = require('fs')
 const { check, validationResult } = require('express-validator/check')
+const https = require('https')
+const helmet = require('helmet')
+const nobots = require('express-nobots')
 
-let db = new sqlite3.Database('database.db', err => {
-  if (err) return console.error(err.message)
-  console.log("Connected to the SQLite database.")
+function connect_db() {
+  let db = new sqlite3.Database('database.db', err => {
+    if (err) return console.error(err.message)
+    console.log("Connected to the SQLite database.")
 
-  db.run(`CREATE TABLE IF NOT EXISTS signups(
-    email text unique,
-    created datetime default current_timestamp
-  );`, [], err => {
-    if (err) console.log(err)
   })
+
+  return db
+}
+
+function close_db(db) {
+  db.close(err => {
+    if (err) return console.error(err.message)
+    console.log("Closed the database connection.")
+  })
+}
+
+let db = connect_db()
+
+db.run(`CREATE TABLE IF NOT EXISTS signups(
+  email text unique,
+  created datetime default current_timestamp
+);`, [], err => {
+  if (err) throw(err)
+
+  return db
 })
 
-db.close(err => {
-  if (err) return console.error(err.message)
-  console.log("Closed the database connection.")
-})
+close_db(db)
 
 const app = express()
+
+app.use(helmet())
+
+app.use(nobots())
 
 app.use(express.json())
 
@@ -34,7 +53,7 @@ app.get('/', (req, res) => {
 
 function getEncryptionKey(path) {
 	try {
-		return fs.readFileSync(path).toString()
+		return fs.readFileSync(path).toString().trim()
 	} catch(e) {
 		// Create key if not exists
 		const key = cryptojs.lib.WordArray.random(16).toString()
@@ -43,12 +62,14 @@ function getEncryptionKey(path) {
       return key
     } catch(e) {
       console.log("Failed saving " + path + ": " + e)
+      throw(e)
     }
 	}
 }
 
 function createEncryptedEmail(email) {
-  return cryptojs.AES.encrypt(email, getEncryptionKey('encryption_key.conf'))
+  let encrypted = cryptojs.AES.encrypt(email, getEncryptionKey('encryption_key.conf')).toString()
+  return encrypted
 }
 
 function createDecryptedEmail(encrypted) {
@@ -65,28 +86,41 @@ app.post('/', [
     return res.status(422).send(errors.array()[0].msg)
   }
 
-  const encryptedEmail = createEncryptedEmail(req.body.email)
+  let db = connect_db()
 
-  let db = new sqlite3.Database('database.db', err => {
+  const signups = db.all('SELECT (email) FROM signups',
+    (err,signups) => {
     if (err) {
       console.log(err)
-      return res.status(500).send(err)
+      return res.status(422).send(err)
     }
-    db.run('INSERT INTO signups(email) VALUES ("'+encryptedEmail+'")', err => {
+
+    // Don't insert new signup if email already in database.
+    const emails = signups.map(signup => createDecryptedEmail(signup.email))
+    if (emails.indexOf(req.body.email) > -1) {
+      close_db(db)
+      return res.status(422).send("This email is already signed up!")
+    }
+
+    const encryptedEmail = createEncryptedEmail(req.body.email)
+    db.run('INSERT INTO signups(email) VALUES (?)',
+      [encryptedEmail], err => {
       if (err) {
         console.log(err)
+        close_db(db)
         return res.status(422).send(err)
       }
       console.log("Saving email!")
-      res.send("Saved email successfully!")
     })
+
+    res.send("Saved email successfully!")
   })
 })
 
+// Returns a new array of signup objects with removed duplicate emails.
 function uniqEmails(rows, filter, seen=[], i=0) {
   if (i+1 > rows.length) return seen
 
-  // TODO: Find a pure way of doing this (without using rows[i] inside the bloody function).
   if (seen.filter(row => row.email === rows[i].email).length == 0) {
     seen.push(rows[i])
   }
@@ -94,8 +128,17 @@ function uniqEmails(rows, filter, seen=[], i=0) {
   return uniqEmails(rows, filter, seen, i+1)
 }
 
-app.get('/signups', (req, res) => {
-  let db = new sqlite3.Database('database.db', err => {
+app.get('/signups', (req, res, next) => {
+    // Validate password
+
+    const correctPwd = fs.readFileSync('adminpwd.conf').toString().trim()
+    if (req.query.password === correctPwd) {
+      return next()
+    }
+    res.status(401).send("Incorrect password.")
+  },
+  (req, res) => {
+    let db = new sqlite3.Database('database.db', err => {
     if (err) console.log(err)
 
     db.all('SELECT email, created FROM signups', (err, rows) => {
@@ -116,6 +159,19 @@ app.get('/signups', (req, res) => {
   })
 })
 
-app.listen(3000, () => {
-  console.log("Timed signup form listening on port 3000!")
-})
+const PRODUCTION = false
+
+if(PRODUCTION === true) {
+  const options = {
+    key: fs.readFileSync('signupform-key.pem'),
+    cert: fs.readFileSync('signupform-cert.pem')
+  }
+
+  https.createServer(options, app).listen(3000, () => {
+    console.log("Timed signup form listening on port 3000!")
+  })
+} else {
+  app.listen(3000, () => {
+    console.log("Timed signup form listening on port 3000!")
+  })
+}

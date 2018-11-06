@@ -1,16 +1,8 @@
 User features:
 
 Admin features:
-* Read list of submitted emails.
-* Users should not have access to this list.
 
 Security features:
-* Check if regex to validate email is evil.
-* Sanitize req.body. Everywhere.
-* Set up express-limiter to limit user requests.
-* Use helmet with express!
-* Enable TLS/SSL (HTTPS).
-* Block bots using express-nobots.
 
 Done:
 * Store encryption key in (auto-generated?) config file.
@@ -21,3 +13,13 @@ Done:
 * Make it pretty with CSS.
 * Remove the signup input after submitting.
 * Fix issue with website resizing after submitting.
+* Read list of submitted emails.
+* Check if regex to validate email is evil. // I used a library to do it for me. No regex.
+* Sanitize req.body. Everywhere.
+* Users should not have access to this list.
+* Use parameterized SQL queries.
+* Enable SSL (HTTPS).
+* Created instructions on how to set up the signup form with all the config files.
+* Use helmet with express!
+* Block bots using express-nobots.
+* Check for duplicate emails before inserting, since "unique" doesn't work when the info is encrypted.

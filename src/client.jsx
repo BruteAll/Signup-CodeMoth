@@ -36,9 +36,10 @@ function EmailInput(props) {
   return (
     <label>Email:
     <input type="text" id="email-input" 
-      onChange={props.emailObserver} />
+      onChange={props.emailObserver}/>
     <button
-      onClick={props.submitHandler}>Submit</button>
+      onClick={props.submitHandler}
+      disabled={props.submitting}>Submit</button>
     </label>
   )
 }
@@ -54,7 +55,8 @@ function Form(props) {
       <EmailInput 
         emailObserver={props.emailObserver}
         submitHandler={props.submitHandler}
-        submitted={props.submitted}/>
+        submitted={props.submitted}
+        submitting={props.submitting}/>
       <Feedback message={props.feedback}/>
 		</div>
   )
@@ -67,6 +69,7 @@ class App extends Component {
     this.state = {
       email: '',
       feedback: '',
+      submitting: false,
       submitted: false
     }
   }
@@ -76,17 +79,19 @@ class App extends Component {
     const submitHandler = () => {
       this.setState({
         feedback: "Submitting...",
-        submitted: true
+        submitting: true
       })
 
       this.props.post('/', {email: this.state.email}).then(res => {
         this.setState({
-          feedback: "Thank you for signing up!"
+          feedback: "Thank you for signing up!",
+          submitted: true
         })
       }).catch(err => {
         this.setState({
           feedback: err.response.data,
-          submitted: false
+          submitted: false,
+          submitting: false
         })
       })
     }
@@ -106,7 +111,8 @@ class App extends Component {
             submitHandler={submitHandler}
             emailObserver={emailObserver}
             feedback={this.state.feedback}
-            submitted={this.state.submitted}/>
+            submitted={this.state.submitted}
+            submitting={this.state.submitting}/>
 				</main>
 			</div>
 		)
