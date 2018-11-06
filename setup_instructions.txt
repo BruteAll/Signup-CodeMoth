@@ -1,5 +1,6 @@
 1. Generate SSL key and cert files for encryption: client-key.pem and client-cert.pem.
-2. If using an existing database, get its encryption key file, "encryption_key.conf", and put it in the same folder as index.js.
-3. Create a file called "adminpwd.conf" and write the admin password in it. This is the password to access the list of signups.
-3. If in production, set the "PRODUCTION" constant in index.js to true.
-4. Run "node index.js"
+2. Create a new SQLite database next to index.js and name it database.db
+3. If using an existing database, get its encryption key file, "encryption_key.conf", and put it in the same folder as index.js.
+4. Create a file called "adminpwd.conf" and write the admin password in it. This is the password to access the list of signups.
+5. If in production, set the "PRODUCTION" constant in index.js to true.
+6. Run "node index.js"
