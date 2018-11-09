@@ -6,6 +6,7 @@ const { check, validationResult } = require('express-validator/check')
 const https = require('https')
 const helmet = require('helmet')
 const nobots = require('express-nobots')
+const basicAuth = require('express-basic-auth')
 
 function connect_db() {
   let db = new sqlite3.Database('database.db', err => {
@@ -128,16 +129,10 @@ function uniqEmails(rows, filter, seen=[], i=0) {
   return uniqEmails(rows, filter, seen, i+1)
 }
 
-app.get('/signups', (req, res, next) => {
-    // Validate password
-
-    const correctPwd = fs.readFileSync('adminpwd.conf').toString().trim()
-    if (req.query.password === correctPwd) {
-      return next()
-    }
-    res.status(401).send("Incorrect password.")
-  },
-  (req, res) => {
+app.get('/signups', basicAuth({
+  // TODO: Put username and password in config file.
+  users: { '[USERNAME]': '[PASSWORD]' }
+}), (req, res) => {
     let db = new sqlite3.Database('database.db', err => {
     if (err) console.log(err)
 
