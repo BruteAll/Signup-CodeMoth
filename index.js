@@ -7,6 +7,7 @@ const https = require('https')
 const helmet = require('helmet')
 const nobots = require('express-nobots')
 const basicAuth = require('express-basic-auth')
+const config = require('config.js')
 
 function connect_db() {
   let db = new sqlite3.Database('database.db', err => {
@@ -53,19 +54,7 @@ app.get('/', (req, res) => {
 })
 
 function getEncryptionKey(path) {
-	try {
-		return fs.readFileSync(path).toString().trim()
-	} catch(e) {
-		// Create key if not exists
-		const key = cryptojs.lib.WordArray.random(16).toString()
-    try {
-      fs.writeFileSync(path, key)
-      return key
-    } catch(e) {
-      console.log("Failed saving " + path + ": " + e)
-      throw(e)
-    }
-	}
+  return config.encryption_key
 }
 
 function createEncryptedEmail(email) {
@@ -131,7 +120,7 @@ function uniqEmails(rows, filter, seen=[], i=0) {
 
 app.get('/signups', basicAuth({
   // TODO: Put username and password in config file.
-  users: { '[USERNAME]': '[PASSWORD]' }
+  users: { config.admin_user : config.admin_pwd }
 }), (req, res) => {
     let db = new sqlite3.Database('database.db', err => {
     if (err) console.log(err)
@@ -154,9 +143,7 @@ app.get('/signups', basicAuth({
   })
 })
 
-const PRODUCTION = false
-
-if(PRODUCTION === true) {
+if(config.production_mode === true) {
   const options = {
     key: fs.readFileSync('signupform-key.pem'),
     cert: fs.readFileSync('signupform-cert.pem')

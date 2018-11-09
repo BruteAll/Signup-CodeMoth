@@ -87,6 +87,8 @@ encryption_key.conf
 
 # Config files
 *.conf
+*.config
+config.js
 
 # SQLite database
 *.db
