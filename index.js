@@ -7,7 +7,7 @@ const https = require('https')
 const helmet = require('helmet')
 const nobots = require('express-nobots')
 const basicAuth = require('express-basic-auth')
-const config = require('config.js')
+const config = require('./config.js')
 
 function connect_db() {
   let db = new sqlite3.Database('database.db', err => {
@@ -118,9 +118,11 @@ function uniqEmails(rows, filter, seen=[], i=0) {
   return uniqEmails(rows, filter, seen, i+1)
 }
 
+const admin_credentials = {}
+admin_credentials[config.admin_user] = config.admin_pwd
+
 app.get('/signups', basicAuth({
-  // TODO: Put username and password in config file.
-  users: { config.admin_user : config.admin_pwd }
+  users: admin_credentials
 }), (req, res) => {
     let db = new sqlite3.Database('database.db', err => {
     if (err) console.log(err)
