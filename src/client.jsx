@@ -48,7 +48,7 @@ function Form(props) {
 
   return (
 		<div>
-			<p>[event description]</p>
+			<p>This is a signup form for the Code Moth lecture on 29th of November, 18:00-20:00. Read here for more info if you haven't already: <a href="https://digidemlab.org/hackerspace/#/lectures">https://digidemlab.org/hackerspace/#/lectures</a></p>
 			<p>Write your email below and click submit to sign up for the event!</p>
       <p>We will only use the email to see how many are signed up, and to send you information about the event.</p>
       <p>After the event the email will be removed from our database.</p>
@@ -103,8 +103,9 @@ class App extends Component {
 		return (
 			<div>
 				<header>
-					<h1>Signup form for [event title]</h1>
-					<img src="brainpuzzle.gif"/>
+					<h1>Signup form for:</h1>
+          <h1>Why should I learn programming?</h1>
+					<img src="focused_radu_and_seb.png"/>
 				</header>
 				<main>
           <Form 

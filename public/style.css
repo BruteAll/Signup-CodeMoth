@@ -3,11 +3,6 @@
 	font-family: 'ContentFont';
 }
 
-@font-face {
-	src: url('Montserrat-Regular.ttf');
-	font-family: 'TitleFont';
-}
-
 body {
 	font-family: "ContentFont";
 	font-size: 20px;
@@ -27,8 +22,7 @@ main {
 
 h1 {
 	font-weight: normal;
-	font-family: 'TitleFont';
-	text-transform: uppercase;
+	font-family: 'ContentFont';
 	text-align: center;
 }
 
@@ -39,6 +33,7 @@ p,label {
 img {
 	display: block;
 	margin: auto;
+  width: 400px;
 }
 
 label {
